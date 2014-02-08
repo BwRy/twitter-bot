@@ -4,20 +4,20 @@
 
 #REQUIRED PARAMS
 username="$*"
-echo "Password:"
-read -s password
+cookiefile="$(dirname $0)/cookie.txt"
+read -p "Password:" -s password
 
 #EXTRA OPTIONS
 uagent="Mozilla/5.0" #user agent (fake a browser)
 sleeptime=0 #add pause between requests
 
-touch "cookie.txt" #create a temp. cookie file
+touch "$cookiefile" && chmod 600 $cookiefile 
 
 #GRAB LOGIN TOKENS
-echo "[+] Fetching twitter.com..." && sleep $sleeptime
-initpage=$(curl -s -b "cookie.txt" -c "cookie.txt" -L -A "$uagent" "https://mobile.twitter.com/session/new")
+echo "[+] Fetching twitter.com..." >&2 && sleep $sleeptime
+initpage=$(curl -s -b "$cookiefile" -c "$cookiefile" -L -A --tlsv1.2 "$uagent" "https://mobile.twitter.com/session/new")
 token=$(echo "$initpage" | grep "authenticity_token" | sed -e 's/.*value="//' | sed -e 's/" \/>.*//')
 
 #LOGIN
-echo "[+] Submitting the login form..." && sleep $sleeptime
-loginpage=$(curl -s -b "cookie.txt" -c "cookie.txt" -L -A "$uagent" -d "authenticity_token=$token&username=$username&password=$password" "https://mobile.twitter.com/session")
+echo "[+] Submitting the login form..." >&2 && sleep $sleeptime
+loginpage=$(curl -s -b "$cookiefile" -c "$cookiefile" -L -A --tlsv1.2 "$uagent" -d "authenticity_token=$token&username=$username&password=$password" "https://mobile.twitter.com/session")
